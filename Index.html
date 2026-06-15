@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>World Game AG | Monster World</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800;900&family=Press+Start+2P&display=swap');
+
+  :root{
+    --bg: #0c0f1a;
+    --bg-deep: #06070d;
+    --panel: #141828;
+    --crystal: #5ef0ff;
+    --crystal-2: #b388ff;
+    --gold: #ffcc4d;
+    --hp: #ff5470;
+    --text: #e9edf7;
+    --muted: #8b93ad;
+    --border: rgba(94,240,255,0.18);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    font-family:'Vazirmatn', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text);
+    overflow:hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pixel{ font-family:'Press Start 2P', cursive; }
+
+  /* ====== START SCREEN ====== */
+  #startScreen{
+    position:fixed; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    z-index:50;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(94,240,255,0.12), transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(179,136,255,0.14), transparent 45%),
+      var(--bg-deep);
+    transition: opacity .5s ease, visibility .5s ease;
+  }
+  #startScreen.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+
+  #startScreen::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(94,240,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(94,240,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at 50% 35%, black 0%, transparent 70%);
+    z-index:-1;
+  }
+
+  .start-logo{
+    display:flex; align-items:center; gap:12px; justify-content:center;
+    font-weight:900; font-size:1.1rem; letter-spacing:1px;
+    margin-bottom:30px; color:var(--muted);
+  }
+  .gem{
+    width:22px; height:22px;
+    background: linear-gradient(135deg, var(--crystal), var(--crystal-2));
+    transform: rotate(45deg);
+    border-radius:3px;
+    box-shadow: 0 0 18px var(--crystal);
+    animation: spin 6s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(405deg); } }
+
+  .crystal-stage{
+    width:140px; height:140px;
+    position:relative;
+    margin-bottom:10px;
+  }
+  .shard{
+    position:absolute;
+    width:54px; height:54px;
+    background: linear-gradient(135deg, var(--crystal-2), var(--crystal));
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    opacity:0.85;
+    box-shadow: 0 0 30px rgba(94,240,255,0.45);
+    animation: float 5s ease-in-out infinite;
+  }
+  .shard:nth-child(1){ top:0; left:42px; animation-delay:0s; }
+  .shard:nth-child(2){ top:55px; left:0; transform: scale(0.7) rotate(-20deg); animation-delay:1.2s; opacity:0.6;}
+  .shard:nth-child(3){ top:62px; left:88px; transform: scale(0.6) rotate(25deg); animation-delay:2.4s; opacity:0.5;}
+  @keyframes float{
+    0%,100%{ transform: translateY(0) rotate(0); }
+    50%{ transform: translateY(-14px) rotate(8deg); }
+  }
+
+  #startScreen h1{
+    font-size: clamp(2.2rem, 7vw, 4.2rem);
+    font-weight:900; letter-spacing:-1px; line-height:1.15;
+    margin-bottom:14px;
+  }
+  #startScreen h1 span{
+    background: linear-gradient(120deg, var(--crystal), var(--crystal-2), var(--gold));
+    background-size:200% auto;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation: shine 6s linear infinite;
+  }
+  @keyframes shine{ to{ background-position:200% center; } }
+
+  #startScreen p.lead{
+    max-width:480px; color:var(--muted); margin-bottom:34px; font-size:1rem; padding:0 20px;
+  }
+
+  /* character select */
+  .char-row{
+    display:flex; gap:16px; justify-content:center; margin-bottom:36px; flex-wrap:wrap;
+    padding:0 16px;
+  }
+  .char-card{
+    width:108px; padding:16px 10px;
+    background: var(--panel);
+    border:2px solid var(--border);
+    border-radius:14px;
+    cursor:pointer;
+    transition: border-color .15s, transform .15s;
+    text-align:center;
+  }
+  .char-card:hover{ transform:translateY(-3px); border-color: var(--crystal-2); }
+  .char-card.selected{
+    border-color: var(--crystal);
+    box-shadow: 0 0 24px rgba(94,240,255,0.35);
+    transform:translateY(-3px);
+  }
+  .char-card .icon{ font-size:2.4rem; display:block; margin-bottom:8px; }
+  .char-card .name{ font-size:0.82rem; font-weight:700; }
+  .char-card .perk{ font-size:0.68rem; color:var(--muted); margin-top:4px; }
+
+  .btn{
+    font-family:'Vazirmatn',sans-serif;
+    font-weight:700; font-size:1.05rem;
+    padding:16px 44px; border-radius:10px; border:none; cursor:pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn-primary{
+    background: linear-gradient(135deg, var(--crystal), var(--crystal-2));
+    color:#06070d;
+    box-shadow: 0 8px 30px -8px var(--crystal);
+  }
+  .btn-primary:hover{ transform: translateY(-3px); box-shadow: 0 12px 36px -8px var(--crystal); }
+  .btn-primary:disabled{ opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  .controls-hint{
+    margin-top:22px; color:var(--muted); font-size:0.8rem;
+    display:flex; gap:18px; flex-wrap:wrap; justify-content:center; padding:0 16px;
+  }
+  .controls-hint b{ color:var(--text); }
+
+  /* ====== GAME ====== */
+  #gameWrap{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--bg-deep);
+  }
+  #gameCanvas{
+    background: linear-gradient(180deg, #1a2138 0%, #0c0f1a 70%);
+    image-rendering: pixelated;
+    display:block;
+    max-width:100%; max-height:100%;
+  }
+
+  /* HUD */
+  #hud{
+    position:absolute; top:14px; left:14px; right:14px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    pointer-events:none; z-index:20;
+    font-size:0.85rem;
+  }
+  .hud-panel{
+    background: rgba(12,15,26,0.7);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 14px;
+    backdrop-filter: blur(4px);
+  }
+  .hp-bar{
+    width:140px; height:12px; border-radius:99px;
+    background: rgba(255,255,255,0.08);
+    border:1px solid var(--border);
+    overflow:hidden; margin-top:4px;
+  }
+  .hp-fill{
+    height:100%; background: linear-gradient(90deg, var(--hp), var(--gold));
+    width:100%; transition: width .25s ease;
+  }
+  .hud-row{ display:flex; align-items:center; gap:8px; }
+  .crystal-counter{ display:flex; gap:4px; margin-top:6px; }
+  .crystal-dot{
+    width:12px; height:12px;
+    background: rgba(255,255,255,0.08);
+    border:1px solid var(--border);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  }
+  .crystal-dot.filled{
+    background: linear-gradient(135deg, var(--crystal), var(--crystal-2));
+    box-shadow: 0 0 8px var(--crystal);
+  }
+  #worldLabel{ font-size:0.78rem; color:var(--muted); margin-top:2px; }
+
+  /* mobile controls */
+  #mobileControls{
+    position:absolute; bottom:18px; left:0; right:0;
+    display:none;
+    justify-content:space-between; align-items:flex-end;
+    padding:0 18px; z-index:20; pointer-events:none;
+  }
+  .mc-group{ display:flex; gap:10px; pointer-events:auto; }
+  .mc-btn{
+    width:62px; height:62px; border-radius:50%;
+    background: rgba(20,24,40,0.75);
+    border:1px solid var(--border);
+    color:var(--text); font-size:1.4rem;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-user-select:none; user-select:none;
+    backdrop-filter: blur(4px);
+  }
+  .mc-btn:active{ background: rgba(94,240,255,0.25); border-color: var(--crystal); }
+  .mc-btn.jump{ background: rgba(94,240,255,0.12); }
+
+  @media (pointer: coarse){
+    #mobileControls{ display:flex; }
+  }
+
+  /* overlays: pause / message / game over / win */
+  .overlay{
+    position:absolute; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    background: rgba(6,7,13,0.78);
+    backdrop-filter: blur(4px);
+    z-index:30; text-align:center;
+  }
+  .overlay.show{ display:flex; }
+  .overlay-box{ padding:30px; max-width:420px; }
+  .overlay h2{ font-size:1.8rem; font-weight:900; margin-bottom:12px; }
+  .overlay h2.gold{ color:var(--gold); }
+  .overlay h2.red{ color:var(--hp); }
+  .overlay h2.crystal{ color:var(--crystal); }
+  .overlay p{ color:var(--muted); margin-bottom:24px; font-size:0.95rem; }
+
+  /* toast for pickups */
+  #toast{
+    position:absolute; top:70px; left:50%; transform:translateX(-50%);
+    background: rgba(20,24,40,0.85);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 18px;
+    font-size:0.85rem;
+    opacity:0; transition: opacity .3s, transform .3s;
+    z-index:25; pointer-events:none; white-space:nowrap;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(6px); }
+
+  /* boss bar */
+  #bossBar{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    width:min(360px, 60vw);
+    z-index:20; display:none; text-align:center;
+  }
+  #bossBar.show{ display:block; }
+  #bossBar .name{
+    font-size:0.78rem; color:var(--hp); margin-bottom:4px; letter-spacing:1px;
+  }
+  #bossBar .bar{
+    height:12px; border-radius:99px; background: rgba(255,255,255,0.08);
+    border:1px solid rgba(255,84,112,0.3); overflow:hidden;
+  }
+  #bossBar .fill{
+    height:100%; background: linear-gradient(90deg, var(--hp), var(--gold));
+    width:100%; transition: width .2s;
+  }
+
+  .small{ font-size:0.72rem; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ============ START SCREEN ============ -->
+<div id="startScreen">
+  <div class="start-logo">
+    <div class="gem"></div>
+    World Game AG
+  </div>
+  <div class="crystal-stage">
+    <div class="shard"></div>
+    <div class="shard"></div>
+    <div class="shard"></div>
+  </div>
+  <h1><span>Monster World</span></h1>
+  <p class="lead">یک موجود انتخاب کن، وارد نقشه شو، تکه‌های کریستال رو پیدا کن، با هیولاها بجنگ و در پایان هر دنیا با یک باس روبه‌رو شو.</p>
+
+  <div class="char-row" id="charRow">
+    <div class="char-card selected" data-char="knight">
+      <span class="icon">🛡️</span>
+      <div class="name">شوالیه</div>
+      <div class="perk">جون بیشتر</div>
+    </div>
+    <div class="char-card" data-char="mage">
+      <span class="icon">🧙</span>
+      <div class="name">جادوگر</div>
+      <div class="perk">حمله قوی‌تر</div>
+    </div>
+    <div class="char-card" data-char="ranger">
+      <span class="icon">🏹</span>
+      <div class="name">کماندار</div>
+      <div class="perk">سرعت بیشتر</div>
+    </div>
+    <div class="char-card" data-char="rogue">
+      <span class="icon">🥷</span>
+      <div class="name">دزد</div>
+      <div class="perk">پرش بلندتر</div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="startBtn">شروع بازی</button>
+
+  <div class="controls-hint">
+    <span><b>حرکت:</b> ← →  /  A D</span>
+    <span><b>پرش:</b> Space / ↑</span>
+    <span><b>دویدن:</b> Shift</span>
+    <span><b>حمله:</b> F / Enter</span>
+    <span><b>آهنربا:</b> 🧲 سکه‌ها رو خودکار جمع می‌کنه</span>
+  </div>
+</div>
+
+<!-- ============ GAME SCREEN ============ -->
+<div id="gameWrap">
+  <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+  <div id="hud">
+    <div class="hud-panel">
+      <div class="hud-row">
+        <span id="charIcon">🛡️</span>
+        <div>
+          <div class="hp-bar"><div class="hp-fill" id="hpFill"></div></div>
+        </div>
+      </div>
+      <div class="crystal-counter" id="crystalCounter"></div>
+      <div id="worldLabel">دنیا ۱ — مرداب اسلایم‌ها</div>
+    </div>
+    <div class="hud-panel">
+      <div>💰 <span id="coinCount">0</span></div>
+      <div class="small">⭐ XP: <span id="xpCount">0</span> (Lv <span id="levelCount">1</span>)</div>
+    </div>
+  </div>
+
+  <div id="bossBar">
+    <div class="name" id="bossName">شاه اسلایم</div>
+    <div class="bar"><div class="fill" id="bossFill"></div></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="mobileControls">
+    <div class="mc-group">
+      <div class="mc-btn" id="btnLeft">◀</div>
+      <div class="mc-btn" id="btnRight">▶</div>
+    </div>
+    <div class="mc-group">
+      <div class="mc-btn" id="btnRun">⚡</div>
+      <div class="mc-btn jump" id="btnJump">⤴</div>
+    </div>
+  </div>
+
+  <!-- pause overlay -->
+  <div class="overlay" id="pauseOverlay">
+    <div class="overlay-box">
+      <h2>⏸ مکث</h2>
+      <p>برای ادامه کلید P یا دکمه زیر رو بزن.</p>
+      <button class="btn btn-primary" id="resumeBtn">ادامه بازی</button>
+    </div>
+  </div>
+
+  <!-- game over overlay -->
+  <div class="overlay" id="gameOverOverlay">
+    <div class="overlay-box">
+      <h2 class="red">💀 جونت تموم شد</h2>
+      <p id="gameOverText">از آخرین چک‌پوینت دوباره شروع می‌کنی.</p>
+      <button class="btn btn-primary" id="respawnBtn">شروع از چک‌پوینت</button>
+    </div>
+  </div>
+
+  <!-- world clear overlay -->
+  <div class="overlay" id="worldClearOverlay">
+    <div class="overlay-box">
+      <h2 class="crystal">💎 تکه کریستال پیدا شد!</h2>
+      <p id="worldClearText">مرحله جدید باز شد.</p>
+      <button class="btn btn-primary" id="nextWorldBtn">ورود به دنیای بعد</button>
+    </div>
+  </div>
+
+  <!-- final win overlay -->
+  <div class="overlay" id="winOverlay">
+    <div class="overlay-box">
+      <h2 class="gold">👑 تو فرمانروای Monster World شدی!</h2>
+      <p>پادشاه تاریکی شکست خورد و کریستال دوباره کامل شد.</p>
+      <button class="btn btn-primary" id="restartBtn">شروع دوباره</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ====================== CONFIG ======================
+  const CANVAS_W = 960, CANVAS_H = 540;
+  const GRAVITY = 0.55;
+  const GROUND_Y = CANVAS_H - 60;
+
+  const CHAR_STATS = {
+    knight: { hp: 180, speed: 3.2, run: 5.2, jump: -11, dmg: 20, icon:'🛡️', name:'شوالیه' },
+    mage:   { hp: 140, speed: 3.0, run: 4.8, jump: -11, dmg: 30, icon:'🧙', name:'جادوگر' },
+    ranger: { hp: 150, speed: 3.6, run: 5.8, jump: -11, dmg: 22, icon:'🏹', name:'کماندار' },
+    rogue:  { hp: 140, speed: 3.2, run: 5.2, jump: -13, dmg: 22, icon:'🥷', name:'دزد' },
+  };
+
+  // World definitions ---------------------------------------------------
+  // Each world: ground segments, hazards (pit/spike/laser/movingRock),
+  // enemies (slime/skeleton/robot/dragonling), items (coin/heart/shield/speed/magnet),
+  // crystal location, boss.
+  // Difficulty notes: hazards/enemies are spaced out, gaps are narrow and
+  // forgiving, more hearts are scattered around, and bosses hit softly.
+  const WORLDS = [
+    {
+      name:'دنیا ۱ — جنگل سرسبز',
+      icon:'🌳',
+      bg: ['#1f3a2a','#0b1a12'],
+      length: 2500,
+      ground: [
+        {x:0, w:420},
+        {x:480, w:260},
+        {x:820, w:320},
+        {x:1230, w:260},
+        {x:1580, w:360},
+        {x:2030, w:470},
+      ],
+      hazards: [
+        {type:'pit', x:420, w:60},
+        {type:'spike', x:760, w:50},
+        {type:'pit', x:1140, w:70},
+        {type:'movingRock', x:1760, range:110, speed:1.2, y: GROUND_Y-40},
+      ],
+      enemies: [
+        {type:'slime', x:600},
+        {type:'slime', x:950},
+        {type:'skeleton', x:1380},
+        {type:'slime', x:1900},
+      ],
+      items: [
+        {type:'coin', x:540}, {type:'coin', x:580}, {type:'coin', x:620},
+        {type:'magnet', x:880},
+        {type:'coin', x:1280}, {type:'coin', x:1320},
+        {type:'heart', x:1450},
+        {type:'shield', x:1700},
+        {type:'coin', x:2100}, {type:'coin', x:2140}, {type:'coin', x:2180},
+      ],
+      crystal: {x:1480, y: GROUND_Y-90},
+      checkpoint: {x:1430},
+      boss: {type:'forestguard', name:'محافظ جنگل', x:2350, hp:90, dmg:6, icon:'🐗'},
+    },
+    {
+      name:'دنیا ۲ — کویر سوزان',
+      icon:'🏜️',
+      bg: ['#3a2e1a','#1a130a'],
+      length: 2650,
+      ground: [
+        {x:0, w:380},
+        {x:440, w:240},
+        {x:760, w:280},
+        {x:1140, w:240},
+        {x:1480, w:300},
+        {x:1880, w:250},
+        {x:2210, w:440},
+      ],
+      hazards: [
+        {type:'pit', x:380, w:60},
+        {type:'spike', x:680, w:50},
+        {type:'pit', x:1000, w:80},
+        {type:'movingRock', x:1620, range:120, speed:1.5, y: GROUND_Y-40},
+        {type:'pit', x:2080, w:70},
+      ],
+      enemies: [
+        {type:'slime', x:520},
+        {type:'skeleton', x:880},
+        {type:'slime', x:1250},
+        {type:'skeleton', x:1750},
+        {type:'slime', x:2050},
+      ],
+      items: [
+        {type:'coin', x:480}, {type:'coin', x:520},
+        {type:'speed', x:820},
+        {type:'coin', x:1180}, {type:'coin', x:1220}, {type:'coin', x:1260},
+        {type:'heart', x:1420},
+        {type:'magnet', x:1700},
+        {type:'coin', x:2260}, {type:'coin', x:2300},
+      ],
+      crystal: {x:1560, y: GROUND_Y-100},
+      checkpoint: {x:1500},
+      boss: {type:'sandscorpion', name:'عقرب شنی', x:2480, hp:110, dmg:8, icon:'🦂'},
+    },
+    {
+      name:'دنیا ۳ — سرزمین یخی',
+      icon:'❄️',
+      bg: ['#1c2740','#0a0e1c'],
+      length: 2800,
+      ground: [
+        {x:0, w:320},
+        {x:400, w:220},
+        {x:700, w:200},
+        {x:980, w:280},
+        {x:1340, w:220},
+        {x:1640, w:260},
+        {x:1980, w:220},
+        {x:2280, w:520},
+      ],
+      hazards: [
+        {type:'pit', x:320, w:70},
+        {type:'spike', x:620, w:50},
+        {type:'pit', x:900, w:70},
+        {type:'laser', x:1180, h:140, period:100},
+        {type:'movingRock', x:1560, range:130, speed:1.8, y: GROUND_Y-40},
+        {type:'pit', x:1900, w:70},
+      ],
+      enemies: [
+        {type:'skeleton', x:470},
+        {type:'robot', x:1050},
+        {type:'skeleton', x:1430},
+        {type:'dragonling', x:1780},
+        {type:'robot', x:2150},
+      ],
+      items: [
+        {type:'coin', x:440}, {type:'coin', x:480},
+        {type:'magnet', x:760},
+        {type:'coin', x:1030}, {type:'coin', x:1070}, {type:'coin', x:1110},
+        {type:'heart', x:1450},
+        {type:'shield', x:2050},
+        {type:'coin', x:2350}, {type:'coin', x:2390},
+      ],
+      crystal: {x:1700, y: GROUND_Y-100},
+      checkpoint: {x:1640},
+      boss: {type:'icemammoth', name:'ماموت یخی', x:2680, hp:140, dmg:10, icon:'🦣'},
+    },
+    {
+      name:'دنیا ۴ — آتشفشان',
+      icon:'🌋',
+      bg: ['#2a1830','#0c0a14'],
+      length: 2900,
+      ground: [
+        {x:0, w:300},
+        {x:380, w:220},
+        {x:680, w:200},
+        {x:980, w:260},
+        {x:1320, w:220},
+        {x:1640, w:220},
+        {x:1940, w:280},
+        {x:2300, w:600},
+      ],
+      hazards: [
+        {type:'pit', x:300, w:70},
+        {type:'laser', x:620, h:160, period:90},
+        {type:'pit', x:880, w:90},
+        {type:'spike', x:1220, w:60},
+        {type:'movingRock', x:1540, range:140, speed:2.0, y: GROUND_Y-40},
+        {type:'pit', x:1860, w:80},
+        {type:'laser', x:2160, h:140, period:80},
+      ],
+      enemies: [
+        {type:'dragonling', x:520},
+        {type:'robot', x:970},
+        {type:'skeleton', x:1410},
+        {type:'dragonling', x:1750},
+        {type:'robot', x:2100},
+      ],
+      items: [
+        {type:'coin', x:440}, {type:'coin', x:480}, {type:'coin', x:520},
+        {type:'heart', x:1020},
+        {type:'speed', x:1370},
+        {type:'magnet', x:1700},
+        {type:'shield', x:2030},
+        {type:'coin', x:2360}, {type:'coin', x:2400}, {type:'coin', x:2440},
+      ],
+      crystal: {x:1720, y: GROUND_Y-100},
+      checkpoint: {x:1640},
+      boss: {type:'firedragon', name:'اژدهای آتشین', x:2780, hp:160, dmg:12, icon:'🐉'},
+    },
+    {
+      name:'دنیا ۵ — شهر ربات‌ها',
+      icon:'🤖',
+      bg: ['#14202e','#060b12'],
+      length: 2750,
+      ground: [
+        {x:0, w:340},
+        {x:420, w:240},
+        {x:740, w:220},
+        {x:1060, w:260},
+        {x:1400, w:240},
+        {x:1720, w:240},
+        {x:2040, w:460},
+        {x:2540, w:210},
+      ],
+      hazards: [
+        {type:'pit', x:340, w:80},
+        {type:'spike', x:660, w:50, count:2},
+        {type:'laser', x:990, h:170, period:75},
+        {type:'movingRock', x:1500, range:130, speed:2.0, y: GROUND_Y-40},
+        {type:'pit', x:19
